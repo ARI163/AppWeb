@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Lista de Tareas</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-align: center;
+}
+
+.container {
+    background: white;
+    color: black;
+    margin: 50px auto;
+    padding: 20px;
+    width: 400px;
+    border-radius: 15px;
+}
+
+input {
+    padding: 10px;
+    width: 70%;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.agregar { background: green; color: white; }
+.eliminar { background: red; color: white; }
+.completar { background: orange; color: white; }
+
+.tarea {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+}
+
+.completada {
+    text-decoration: line-through;
+    color: gray;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+    <h2>📝 Lista de tareas</h2>
+
+    <input id="input" placeholder="Escribe una tarea">
+    <button class="agregar" onclick="agregar()">Agregar</button>
+
+    <div id="lista"></div>
+</div>
+
+<script>
+
+const API = "http://localhost:8080/tareas";
+
+function cargar() {
+    fetch(API)
+    .then(r => r.json())
+    .then(data => {
+        const lista = document.getElementById("lista");
+        lista.innerHTML = "";
+
+        data.forEach(t => {
+            lista.innerHTML += `
+            <div class="tarea">
+                <span class="${t.completado ? 'completada' : ''}">
+                    ${t.nombre}
+                </span>
+
+                <div>
+                    <button class="completar" onclick="toggle(${t.id}, ${t.completado})">✔</button>
+                    <button class="eliminar" onclick="eliminar(${t.id})">❌</button>
+                </div>
+            </div>
+            `;
+        });
+    });
+}
+
+function agregar() {
+    const nombre = document.getElementById("input").value;
+
+    fetch(API, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({nombre, completado:false})
+    }).then(() => {
+        document.getElementById("input").value = "";
+        cargar();
+    });
+}
+
+function eliminar(id) {
+    fetch(API + "/" + id, {method: "DELETE"})
+    .then(cargar);
+}
+
+function toggle(id, estado) {
+    fetch(API + "/" + id, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            nombre: "",
+            completado: !estado
+        })
+    }).then(cargar);
+}
+
+cargar();
+
+</script>
+
+</body>
+</html>
